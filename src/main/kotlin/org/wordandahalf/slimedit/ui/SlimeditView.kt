@@ -3,26 +3,25 @@ package org.wordandahalf.slimedit.ui
 import javafx.fxml.FXML
 import javafx.scene.control.Alert
 import javafx.scene.control.ButtonType
-import javafx.scene.control.MenuItem
 import javafx.scene.control.TreeView
+import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.BorderPane
 import javafx.stage.FileChooser
 import org.wordandahalf.slimedit.world.InvalidWorldException
 import tornadofx.View
 import org.wordandahalf.slimedit.world.SlimeWorld
-import java.io.File
 
 class SlimeditView : View() {
     private var world : SlimeWorld? = null
 
     override val root : BorderPane by fxml("/main.fxml")
-    val treeView: TreeView<String> by fxid()
+    private val treeView: TreeView<String> by fxid()
 
     init {
-//        treeView.root = SlimeWorldTreeItem(world)
         treeView.isEditable = true
-        treeView.addEventFilter(MouseEvent.MOUSE_CLICKED, TreeItemClickEventHandler())
+        treeView.addEventFilter(KeyEvent.ANY, TreeItemKeyEventHandler(treeView))
+        treeView.addEventFilter(MouseEvent.MOUSE_CLICKED, TreeItemMouseEventHandler())
     }
 
     @FXML
@@ -49,6 +48,7 @@ class SlimeditView : View() {
     fun saveItemClicked() {
         try {
             world?.save()
+            Alert(Alert.AlertType.INFORMATION, "World ${world?.name} has been saved.").showAndWait()
         } catch (e: Exception) {
             Alert(Alert.AlertType.ERROR, e.toString(), ButtonType.OK).showAndWait()
         }
@@ -61,7 +61,13 @@ class SlimeditView : View() {
 
     @FXML
     fun deleteItemClicked() {
+        treeView.selectionModel.selectedItems.forEach {
+            if(it is NbtTagTreeItem<*, *>) {
+                val nbtItem = it as NbtTagTreeItem<*, Any>
 
+                if(nbtItem.delete()) it.getParent().children.remove(it)
+            }
+        }
     }
 
     @FXML

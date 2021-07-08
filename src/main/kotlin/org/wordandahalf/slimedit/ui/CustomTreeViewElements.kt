@@ -9,9 +9,9 @@ import java.security.InvalidParameterException
 import kotlin.experimental.and
 
 class SlimeWorldTreeItem(world: SlimeWorld) : TreeItem<String>(world.name) {
-    private val entityItem = ListTagTreeItem("Entities (${world.getEntityData().size})", world.getEntityData())
-    private val tileEntityItem = ListTagTreeItem("Tile Entities (${world.getTileEntityData().size})", world.getTileEntityData())
-    private val settingsItem = CompoundTagTreeItem("Settings (${world.data.extra.size})", world.data.extra)
+    private val entityItem = ListTagTreeItem("Entities (${world.getEntityData().size})", world.getEntityData(), null)
+    private val tileEntityItem = ListTagTreeItem("Tile Entities (${world.getTileEntityData().size})", world.getTileEntityData(), null)
+    private val settingsItem = CompoundTagTreeItem("Settings (${world.data.extra.size})", world.data.extra, null)
 
     init {
         children.addAll(entityItem, tileEntityItem, settingsItem)
@@ -21,11 +21,26 @@ class SlimeWorldTreeItem(world: SlimeWorld) : TreeItem<String>(world.name) {
 /**
  * Wrapper class that allows [NbtTag]s to be stored in a [javafx.scene.control.TreeView]
  */
-abstract class NbtTagTreeItem<TagType : NbtTag, ValueType : Any>(val name: String, protected var nbt: TagType) : TreeItem<String>() {
+abstract class NbtTagTreeItem<TagType : NbtTag, ValueType : Any>(val name: String, val nbt: TagType, val parent: NbtTag?) : TreeItem<String>() {
     protected val textProperty = ObservableProperty { displayedText() }
 
     init {
         valueProperty().bind(textProperty)
+    }
+
+    fun delete() : Boolean {
+        if(parent == null) return false
+
+        if(parent is NbtList<*>) {
+            parent.remove(nbt)
+            return true
+        }
+        else if(parent is NbtCompound) {
+            parent.remove(name, nbt)
+            return true
+        }
+
+        return false
     }
 
     open fun displayedText() = name
@@ -45,18 +60,18 @@ abstract class NbtTagTreeItem<TagType : NbtTag, ValueType : Any>(val name: Strin
             Pair(NbtIntArray::class, ::IntArrayTagTreeItem),
         )
 
-        fun makeTreeItem(name: String, nbt: NbtTag) : NbtTagTreeItem<*, *> {
+        fun makeTreeItem(name: String, nbt: NbtTag, parent: NbtTag) : NbtTagTreeItem<*, *> {
             val type = nbt::class
             val constructor = NbtTypeTreeItemMap[type] ?: throw InvalidParameterException("Unrecognized TagType '${type.simpleName}'!")
 
-            return constructor.call(name, nbt)
+            return constructor.call(name, nbt, parent)
         }
     }
 }
 
 abstract class EditableNbtTagTreeItem<TagType : NbtTag, ValueType : Any>
-    (name: String, nbt: TagType, val friendlyTypeName: String)
-    : NbtTagTreeItem<TagType, ValueType>(name, nbt) {
+    (name: String, nbt: TagType, parent: NbtTag, val friendlyTypeName: String)
+    : NbtTagTreeItem<TagType, ValueType>(name, nbt, parent) {
 
     init {
         textProperty.invalidate()
@@ -81,7 +96,7 @@ abstract class EditableNbtTagTreeItem<TagType : NbtTag, ValueType : Any>
     abstract fun displayedValue() : String
 }
 
-class ByteTagTreeItem(name: String, nbt: NbtByte) : EditableNbtTagTreeItem<NbtByte, Byte>(name, nbt, "Byte") {
+class ByteTagTreeItem(name: String, nbt: NbtByte, parent: NbtTag) : EditableNbtTagTreeItem<NbtByte, Byte>(name, nbt, parent, "Byte") {
     override fun toNbtValueType(value: String): Byte? {
         return try {
             value.toByte()
@@ -95,7 +110,7 @@ class ByteTagTreeItem(name: String, nbt: NbtByte) : EditableNbtTagTreeItem<NbtBy
     override fun displayedValue(): String = (nbt.value and 0xFF.toByte()).toString()
 }
 
-class ShortTagTreeItem(name: String, nbt: NbtShort) : EditableNbtTagTreeItem<NbtShort, Short>(name, nbt, "Short") {
+class ShortTagTreeItem(name: String, nbt: NbtShort, parent: NbtTag) : EditableNbtTagTreeItem<NbtShort, Short>(name, nbt, parent, "Short") {
     override fun toNbtValueType(value: String): Short? {
         return try {
             value.toShort()
@@ -109,7 +124,7 @@ class ShortTagTreeItem(name: String, nbt: NbtShort) : EditableNbtTagTreeItem<Nbt
     override fun displayedValue(): String = (nbt.value and 0xFFFF.toShort()).toString()
 }
 
-class IntTagTreeItem(name: String, nbt: NbtInt) : EditableNbtTagTreeItem<NbtInt, Int>(name, nbt, "Int") {
+class IntTagTreeItem(name: String, nbt: NbtInt, parent: NbtTag) : EditableNbtTagTreeItem<NbtInt, Int>(name, nbt, parent, "Int") {
     override fun toNbtValueType(value: String): Int? {
         return try {
             value.toInt()
@@ -123,7 +138,7 @@ class IntTagTreeItem(name: String, nbt: NbtInt) : EditableNbtTagTreeItem<NbtInt,
     override fun displayedValue(): String = nbt.value.toString()
 }
 
-class LongTagTreeItem(name: String, nbt: NbtLong) : EditableNbtTagTreeItem<NbtLong, Long>(name, nbt, "Long") {
+class LongTagTreeItem(name: String, nbt: NbtLong, parent: NbtTag) : EditableNbtTagTreeItem<NbtLong, Long>(name, nbt, parent, "Long") {
     override fun toNbtValueType(value: String): Long? {
         return try {
             value.toLong()
@@ -137,7 +152,7 @@ class LongTagTreeItem(name: String, nbt: NbtLong) : EditableNbtTagTreeItem<NbtLo
     override fun displayedValue(): String = nbt.value.toString()
 }
 
-class FloatTagTreeItem(name: String, nbt: NbtFloat) : EditableNbtTagTreeItem<NbtFloat, Float>(name, nbt, "Float") {
+class FloatTagTreeItem(name: String, nbt: NbtFloat, parent: NbtTag) : EditableNbtTagTreeItem<NbtFloat, Float>(name, nbt, parent, "Float") {
     override fun toNbtValueType(value: String): Float? {
         return try {
             value.toFloat()
@@ -151,7 +166,7 @@ class FloatTagTreeItem(name: String, nbt: NbtFloat) : EditableNbtTagTreeItem<Nbt
     override fun displayedValue(): String = nbt.value.toString()
 }
 
-class DoubleTagTreeItem(name: String, nbt: NbtDouble) : EditableNbtTagTreeItem<NbtDouble, Double>(name, nbt, "Double") {
+class DoubleTagTreeItem(name: String, nbt: NbtDouble, parent: NbtTag) : EditableNbtTagTreeItem<NbtDouble, Double>(name, nbt, parent, "Double") {
     override fun toNbtValueType(value: String): Double? {
         return try {
             value.toDouble()
@@ -165,13 +180,13 @@ class DoubleTagTreeItem(name: String, nbt: NbtDouble) : EditableNbtTagTreeItem<N
     override fun displayedValue(): String = nbt.value.toString()
 }
 
-class ByteArrayTagTreeItem(name: String, nbt: NbtByteArray) : NbtTagTreeItem<NbtByteArray, ByteArray>(name, nbt) {
+class ByteArrayTagTreeItem(name: String, nbt: NbtByteArray, parent: NbtTag) : NbtTagTreeItem<NbtByteArray, ByteArray>(name, nbt, parent) {
     init {
-        children.addAll(nbt.value.mapIndexed { i, byte -> ByteTagTreeItem("[$i]", NbtByte(byte)) })
+        children.addAll(nbt.value.mapIndexed { i, byte -> ByteTagTreeItem("[$i]", NbtByte(byte), nbt) })
     }
 }
 
-class StringTagTreeItem(name: String, nbt: NbtString) : EditableNbtTagTreeItem<NbtString, String>(name, nbt, "String") {
+class StringTagTreeItem(name: String, nbt: NbtString, parent: NbtTag) : EditableNbtTagTreeItem<NbtString, String>(name, nbt, parent, "String") {
     override fun toNbtValueType(value: String): String {
         return value
     }
@@ -181,32 +196,32 @@ class StringTagTreeItem(name: String, nbt: NbtString) : EditableNbtTagTreeItem<N
     override fun displayedValue(): String = nbt.value
 }
 
-class ListTagTreeItem(name: String, nbt: NbtList<NbtCompound>) : NbtTagTreeItem<NbtList<NbtCompound>, MutableList<NbtCompound>>(name, nbt) {
+class ListTagTreeItem(name: String, nbt: NbtList<NbtCompound>, parent: NbtTag?) : NbtTagTreeItem<NbtList<NbtCompound>, MutableList<NbtCompound>>(name, nbt, parent) {
     init {
         if(nbt.isNotEmpty()) {
             children.addAll(
                 nbt.mapIndexed { i, tag: NbtTag ->
-                    makeTreeItem("[$i]", tag)
+                    makeTreeItem("[$i]", tag, nbt)
                 }
             )
         }
     }
 }
 
-class CompoundTagTreeItem(name: String, nbt: NbtCompound) : NbtTagTreeItem<NbtCompound, LinkedHashMap<String, NbtTag>>(name, nbt) {
+class CompoundTagTreeItem(name: String, nbt: NbtCompound, parent: NbtTag?) : NbtTagTreeItem<NbtCompound, LinkedHashMap<String, NbtTag>>(name, nbt, parent) {
     init {
         if(nbt.isNotEmpty()) {
             children.addAll(
                 nbt.map { entry: Map.Entry<String, NbtTag> ->
-                    makeTreeItem(entry.key, entry.value)
+                    makeTreeItem(entry.key, entry.value, nbt)
                 }
             )
         }
     }
 }
 
-class IntArrayTagTreeItem(name: String, nbt: NbtIntArray) : NbtTagTreeItem<NbtIntArray, IntArray>(name, nbt) {
+class IntArrayTagTreeItem(name: String, nbt: NbtIntArray, parent: NbtTag) : NbtTagTreeItem<NbtIntArray, IntArray>(name, nbt, parent) {
     init {
-        children.addAll(nbt.value.mapIndexed { i, int -> IntTagTreeItem("[$i]", NbtInt(int)) })
+        children.addAll(nbt.value.mapIndexed { i, int -> IntTagTreeItem("[$i]", NbtInt(int), parent) })
     }
 }

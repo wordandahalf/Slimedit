@@ -7,7 +7,8 @@
     <list default="true" id="eb971f6d-0d73-44fa-9288-f83fd231616c" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/org/wordandahalf/slimedit/ui/CustomTreeViewElements.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/org/wordandahalf/slimedit/ui/CustomTreeViewElements.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/org/wordandahalf/slimedit/world/SlimeWorld.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/org/wordandahalf/slimedit/world/SlimeWorld.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/org/wordandahalf/slimedit/ui/SlimeditView.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/org/wordandahalf/slimedit/ui/SlimeditView.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/org/wordandahalf/slimedit/ui/TreeItemClickEventHandler.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/org/wordandahalf/slimedit/ui/TreeItemMouseEventHandler.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
