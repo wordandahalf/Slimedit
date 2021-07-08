@@ -24,3 +24,22 @@ dependencies {
 tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> { kotlinOptions { jvmTarget = "11" } }
 }
+
+tasks.register<Jar>("uberJar") {
+    archiveClassifier.set("uber")
+
+    manifest {
+        attributes(
+            "Main-Class" to "org.wordandahalf.slimedit.SlimeditMainKt",
+            "Implementation-Title" to "Gradle",
+            "Implementation-Version" to archiveVersion
+        )
+    }
+
+    from(sourceSets.main.get().output)
+
+    dependsOn(configurations.runtimeClasspath)
+    from({
+        configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) }
+    })
+}
