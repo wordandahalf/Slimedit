@@ -9,9 +9,9 @@ import java.security.InvalidParameterException
 import kotlin.experimental.and
 
 class SlimeWorldTreeItem(world: SlimeWorld) : TreeItem<String>(world.name) {
-    private val entityItem = ListTagTreeItem("Entities (${world.entities.size})", world.entities)
-    private val tileEntityItem = ListTagTreeItem("Tile Entities (${world.tileEntities.size})", world.tileEntities)
-    private val settingsItem = CompoundTagTreeItem("Settings (${world.extra.size})", world.extra)
+    private val entityItem = ListTagTreeItem("Entities (${world.getEntityData().size})", world.getEntityData())
+    private val tileEntityItem = ListTagTreeItem("Tile Entities (${world.getTileEntityData().size})", world.getTileEntityData())
+    private val settingsItem = CompoundTagTreeItem("Settings (${world.data.extra.size})", world.data.extra)
 
     init {
         children.addAll(entityItem, tileEntityItem, settingsItem)
