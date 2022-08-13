@@ -84,12 +84,13 @@ class SlimeWorld(val file: File) {
         val compressedChunkData = stream.readNBytes(compressedChunksSize)
 
         // Read tile entity data
-        val tileEntities = readCompressedTag(stream, stream.readInt(), stream.readInt())
+        val tileEntities = readCompressedTag(stream, stream.readInt(), stream.readInt()) ?: NbtCompound(mapOf(Pair("tiles", NbtList<NbtCompound>())))
 
         // Read entity data
         val hasEntities = stream.readBoolean()
-        var entities : NbtCompound? = null
-        if(hasEntities) entities = readCompressedTag(stream, stream.readInt(), stream.readInt())
+        var entities = NbtCompound(mapOf(Pair("entities", NbtList<NbtCompound>())))
+        if(hasEntities)
+            readCompressedTag(stream, stream.readInt(), stream.readInt())?.also { entities = it }
 
         val extra = readCompressedTag(stream, stream.readInt(), stream.readInt())!!
 
@@ -98,12 +99,6 @@ class SlimeWorld(val file: File) {
         val worldMapsData = stream.readNBytes(compressedWorldMapsSize)
 
         stream.close()
-
-        if(tileEntities == null) throw InvalidWorldException("Invalid tile entities data: could not read NBT!")
-        else if(tileEntities["tiles"] == null) throw InvalidWorldException("Invalid tile entities data: invalid NBT!")
-
-        if(entities == null) throw InvalidWorldException("Invalid entities data: could not read NBT!")
-        else if(entities["entities"] == null) throw InvalidWorldException("Invalid entities data: invalid NBT!")
 
         this.data = Data(
             worldVersion, minX, minZ, width, depth, chunkBitmask, uncompressedChunksSize, compressedChunkData, tileEntities, hasEntities, entities, extra, uncompressedWorldMapsSize, worldMapsData
