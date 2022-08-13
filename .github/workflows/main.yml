@@ -1,0 +1,38 @@
+name: Compile
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Build project
+        env:
+          MAVEN_REPO_USERNAME: ${{ secrets.MAVEN_REPO_USERNAME }}
+          MAVEN_REPO_PASSWORD: ${{ secrets.MAVEN_REPO_PASSWORD }}
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: current
+          # Gradle command line arguments, see gradle --help
+          arguments: shadowJar
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: "Artifact"
+          path: build/libs/Slimedit*.jar
